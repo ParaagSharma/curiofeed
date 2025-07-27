@@ -1,4 +1,30 @@
 services:
+  web:
+    build: .
+    container_name: curiofeed_web
+    command: gunicorn core.wsgi:application --bind 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - elasticsearch
+    networks:
+      - curiofeed_network
+    env_file:
+      - .env
+
+  db:
+    image: postgres:15
+    container_name: curiofeed_db
+    networks:
+      - curiofeed_network
+    environment:
+      - POSTGRES_DB=curiofeed
+      - POSTGRES_USER=paraag
+      - POSTGRES_PASSWORD=paraag
+
   elasticsearch:
     image: docker.elastic.co/elasticsearch/elasticsearch:8.13.0
     container_name: elasticsearch
@@ -10,6 +36,12 @@ services:
       - "9200:9200"
     volumes:
       - esdata:/usr/share/elasticsearch/data
+    networks:
+      - curiofeed_network
 
 volumes:
   esdata:
+
+networks:
+  curiofeed_network:
+    driver: bridge
